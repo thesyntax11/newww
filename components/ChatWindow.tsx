@@ -77,6 +77,14 @@ export default function ChatWindow({
         })
       });
 
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const text = await res.text().catch(() => "");
+        throw new Error(
+          `Sunucu geçerli bir yanıt döndürmedi (${res.status}). ` +
+          (text.includes("<!DOCTYPE") ? "Sayfa bir HTML hata sayfası döndürdü — sunucu hatası veya zaman aşımı olabilir." : text.slice(0, 200))
+        );
+      }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Bilinmeyen hata");
 
