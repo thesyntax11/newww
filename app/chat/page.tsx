@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Terminal as TerminalIcon, Brain, Play } from "lucide-react";
+import { ArrowLeft, Terminal as TerminalIcon, Brain, Play, Sparkles } from "lucide-react";
 import ProviderPanel from "@/components/ProviderPanel";
 import ApiKeyModal from "@/components/ApiKeyModal";
 import ChatWindow from "@/components/ChatWindow";
@@ -13,6 +13,8 @@ import CodeEditor from "@/components/CodeEditor";
 import FilePreview from "@/components/FilePreview";
 import LivePreview from "@/components/LivePreview";
 import MemoryPanel from "@/components/MemoryPanel";
+import IntelligencePanel from "@/components/IntelligencePanel";
+import TaskPanel from "@/components/TaskPanel";
 import { useAetherStore } from "@/lib/store";
 
 type PanelMode = "chat" | "editor" | "preview" | "live";
@@ -25,6 +27,7 @@ export default function ChatPage() {
   const [previewFile, setPreviewFile] = useState<string | null>(null);
   const [liveFile, setLiveFile] = useState<string | null>(null);
   const [showMemory, setShowMemory] = useState(false);
+  const [showIntelligence, setShowIntelligence] = useState(false);
 
   const refreshDisk = useCallback(async () => {
     const res = await fetch(`/api/disk?sessionId=${sessionId}`);
@@ -66,6 +69,14 @@ export default function ChatPage() {
           <ProviderPanel onOpenKeyModal={setKeyModalProvider} />
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowIntelligence(true)}
+            title="Zeka Paneli"
+            className="btn-ghost text-xs"
+          >
+            <Sparkles size={14} />
+            Zeka
+          </button>
           <button
             onClick={() => setShowMemory(true)}
             title="Uzun süreli hafıza"
@@ -117,11 +128,15 @@ export default function ChatPage() {
             />
           )}
         </div>
-        <DiskExplorer tree={diskTree} onReset={handleReset} onOpenFile={handleOpenFile} />
+        <div className="flex flex-col gap-3">
+          <TaskPanel />
+          <DiskExplorer tree={diskTree} onReset={handleReset} onOpenFile={handleOpenFile} />
+        </div>
       </div>
 
       <ApiKeyModal providerId={keyModalProvider} onClose={() => setKeyModalProvider(null)} />
       <MemoryPanel sessionId={sessionId} open={showMemory} onClose={() => setShowMemory(false)} />
+      <IntelligencePanel open={showIntelligence} onClose={() => setShowIntelligence(false)} onOpenFile={handleOpenFile} />
     </main>
   );
 }

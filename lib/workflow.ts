@@ -4,6 +4,7 @@ import { review as runReviewer } from "./agents/reviewer";
 import { runToolCalls } from "./agent";
 import { saveTasks, updateTask } from "./taskStore";
 import { addEnhancedMemory } from "./enhancedMemory";
+import { extractProjectFacts } from "./intelligence";
 import {
   AgentTask,
   WorkflowResult,
@@ -46,6 +47,15 @@ export async function runWorkflow(ctx: WorkflowContext): Promise<WorkflowResult>
 
   if (shouldAutoMemorize(userQuery)) {
     addEnhancedMemory(ctx.sessionId, userQuery, { category: "explicit", importance: 8 }, openaiKey).catch(() => {});
+  }
+
+  const projectFacts = extractProjectFacts(ctx.sessionId);
+  for (const fact of projectFacts) {
+    addEnhancedMemory(ctx.sessionId, fact.value, {
+      category: fact.category,
+      importance: 7,
+      tags: [fact.key],
+    }, openaiKey).catch(() => {});
   }
 
   if (isSimpleRequest(userQuery)) {
