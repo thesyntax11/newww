@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from "./supabaseClient";
-import { AgentTask, TaskStatus } from "./orchestrator/types";
+import { AgentTask, TaskStatus } from "./agents/types";
 
 export interface TaskRecord {
   id: string;

@@ -1,37 +1,7 @@
 import { callProvider } from "../providers";
 import { buildReferenceContext } from "../context";
-import { AgentTask, ReviewResult, ReviewIssue, OrchestrationContext } from "./types";
-
-const REVIEWER_SYSTEM = `Sen Aether Reviewer Agent'sın — başka bir agent'ın ürettiği kodu ve dosyaları denetlersin.
-
-Görevin:
-1. Üretilen dosyaları kalite, güvenlik, performans, erişilebilirlik ve tutarlılık açısından incele.
-2. Kullanıcının orijinal isteğine karşı eksik bir şey var mı kontrol et.
-3. Güven skoru (0-100) ver: 90+ çok iyi, 70-89 iyi, 50-69 orta, <50 zayıf.
-4. Eğer güven düşükse ve gerçek bilgi eksikliği varsa web araması öner.
-
-ÇIKTI FORMATI (kesinlikle bu formatı kullan):
-<review>
-<approved>true veya false</approved>
-<confidence>0-100 arası sayı</confidence>
-<critique>
-Kısa bir değerlendirme: genel kalite, ne iyi ne kötü.
-</critique>
-<issues>
-<issue severity="low|medium|high|critical" category="bug|security|performance|accessibility|consistency|missing">
-Sorun açıklaması. Varsa dosya adı belirt.
-</issue>
-</issues>
-<suggested_fixes>
-Önerilen düzeltmelerin listesi.
-</suggested_fixes>
-<missing_requirements>
-Kullanıcının isteğinde var ama üretilmemiş şeyler.
-</missing_requirements>
-<needs_web_search>true veya false</needs_web_search>
-</review>
-
-Sadece <review> bloğu üret. Blok dışında metin yazma.`;
+import { REVIEWER_PROMPT } from "../prompts/reviewerPrompt";
+import { AgentTask, ReviewResult, ReviewIssue, WorkflowContext } from "./types";
 
 const REVIEW_RE = /<review>([\s\S]*?)<\/review>/;
 const APPROVED_RE = /<approved>([\s\S]*?)<\/approved>/;
@@ -42,8 +12,8 @@ const FIXES_RE = /<suggested_fixes>([\s\S]*?)<\/suggested_fixes>/;
 const MISSING_RE = /<missing_requirements>([\s\S]*?)<\/missing_requirements>/;
 const WEB_RE = /<needs_web_search>([\s\S]*?)<\/needs_web_search>/;
 
-export async function runReviewer(
-  ctx: OrchestrationContext,
+export async function review(
+  ctx: WorkflowContext,
   userQuery: string,
   tasks: AgentTask[],
   writtenFiles: { path: string; size: number; updatedAt: string }[]
@@ -58,7 +28,7 @@ export async function runReviewer(
     ? writtenFiles.map((f) => `- ${f.path} (${f.size} bayt)`).join("\n")
     : "(dosya üretilmedi)";
 
-  const system = `${REVIEWER_SYSTEM}
+  const system = `${REVIEWER_PROMPT}
 
 ---
 

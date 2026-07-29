@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProvider } from "@/lib/providers";
 import { buildImageAttachments } from "@/lib/context";
-import { orchestrate } from "@/lib/orchestrator";
+import { runWorkflow } from "@/lib/workflow";
 import { shouldCompress, compressContext } from "@/lib/contextCompression";
 import { ChatMessage } from "@/lib/types";
 
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const provider = getProvider(providerId);
-    const result = await orchestrate({
+    const result = await runWorkflow({
       sessionId,
       providerId,
       apiKey,

@@ -1,37 +1,9 @@
 import { callProvider } from "../providers";
-import { buildSystemPrompt } from "../systemPrompt";
 import { buildReferenceContext } from "../context";
 import { buildEnhancedMemoryContext } from "../enhancedMemory";
 import { buildRagContext } from "../vectorStore";
+import { PLANNER_PROMPT } from "../prompts/plannerPrompt";
 import { AgentTask, PlanResult } from "./types";
-
-const PLANNER_SYSTEM = `Sen Aether Planner Agent'sın — bir kullanıcı isteğini bağımsız, sıralı alt-görevlere (task list) ayırırsın.
-
-Kurallar:
-1. Kullanıcının isteğini analiz et ve 2-8 arası somut alt-görev üret.
-2. Her görev bir başlık (title) ve 1-2 cümlelik açıklama (description) içermeli.
-3. Görevler mantıksal sırayla olmalı (ör. önce veri modeli, sonra bileşen, sonra API).
-4. Çok küçük istekler (ör. "bu butonun rengini değiştir") için 1-2 görev yeterli.
-5. Büyük istekler (ör. "Instagram clone yap") için 5-8 görev üret.
-6. Mevcut diskteki dosyaları dikkate al — zaten var olan şeyleri tekrar oluşturma görevi yazma.
-7. Her görev bağımsız çalıştırılabilir olmalı ama önceki görevlerin çıktısına güvenebilir.
-
-ÇIKTI FORMATI (kesinlikle bu formatı kullan):
-<plan>
-<reasoning>
-Kısa bir muhakeme: neden bu görevleri seçtin, sıralama mantığı ne?
-</reasoning>
-<task>
-<title>Görev başlığı</title>
-<description>Bu görev ne yapacak, hangi dosyalar etkilenyecek.</description>
-</task>
-<task>
-<title>Görev başlığı</title>
-<description>Açıklama...</description>
-</task>
-</plan>
-
-Sadece <plan> bloğu üret. Blok dışında metin yazma.`;
 
 const PLAN_RE = /<plan>([\s\S]*?)<\/plan>/;
 const TASK_RE = /<task>([\s\S]*?)<\/task>/g;
@@ -39,7 +11,7 @@ const TITLE_RE = /<title>([\s\S]*?)<\/title>/;
 const DESC_RE = /<description>([\s\S]*?)<\/description>/;
 const REASONING_RE = /<reasoning>([\s\S]*?)<\/reasoning>/;
 
-export async function runPlanner(
+export async function plan(
   sessionId: string,
   userQuery: string,
   providerId: string,
@@ -54,7 +26,7 @@ export async function runPlanner(
     buildRagContext(sessionId, userQuery, openaiApiKey)
   ]);
 
-  const system = `${PLANNER_SYSTEM}
+  const system = `${PLANNER_PROMPT}
 
 ---
 

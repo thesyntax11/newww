@@ -1,21 +1,21 @@
 import { callProvider } from "../providers";
 import { buildSystemPrompt } from "../systemPrompt";
-import { buildReferenceContext } from "../context";
-import { buildImageAttachments } from "../context";
+import { buildReferenceContext, buildImageAttachments } from "../context";
 import { processAgentResponse, runToolCalls } from "../agent";
 import { buildEnhancedMemoryContext } from "../enhancedMemory";
 import { buildRagContext } from "../vectorStore";
-import { AgentTask, TaskResult, OrchestrationContext } from "./types";
+import { AgentTask, TaskResult, WorkflowContext } from "./types";
 
-const MAX_TASK_TOOL_ROUNDS = 3;
+const MAX_TOOL_ROUNDS = 3;
 const MAX_RETRIES = 2;
 
-function buildCoderSystem(
+function buildExecutorSystem(
   sessionId: string,
   task: AgentTask,
   allTasks: AgentTask[],
   memoryContext: string,
-  ragContext: string
+  ragContext: string,
+  extraInstructions?: string
 ): string {
   const base = buildSystemPrompt(sessionId);
   const referenceContext = buildReferenceContext(sessionId);
@@ -24,13 +24,18 @@ function buildCoderSystem(
     .map((t) => `- [${t.status}] ${t.index + 1}. ${t.title}${t.resultSummary ? ` → ${t.resultSummary}` : ""}`)
     .join("\n");
 
+  const previousResults = allTasks
+    .filter((t) => t.index < task.index && t.resultSummary)
+    .map((t) => `- ${t.title}: ${t.resultSummary}`)
+    .join("\n") || "(bu ilk görev)";
+
   return `${base}
 
 ---
 
-## CODER AGENT ROLÜ
+## EXECUTOR AGENT ROLÜ
 
-Şu an çoklu-agent hattının CODER aşamasındasın. Sana tek bir alt-görev verildi.
+Şu an çoklu-agent hattının EXECUTOR aşamasındasın. Sana tek bir alt-görev verildi.
 
 ### Mevcut Görev
 **${task.title}**
@@ -40,7 +45,7 @@ ${task.description}
 ${taskList}
 
 ### Önceki Görevlerin Sonuçları
-${allTasks.filter((t) => t.index < task.index && t.resultSummary).map((t) => `- ${t.title}: ${t.resultSummary}`).join("\n") || "(bu ilk görev)"}
+${previousResults}
 
 ### Kurallar
 1. Yalnızca sana verilen görevle ilgilen — diğer görevleri sen değil diğer agent'lar yapacak.
@@ -48,8 +53,8 @@ ${allTasks.filter((t) => t.index < task.index && t.resultSummary).map((t) => `- 
 3. Dosyaları <file path="..."> etiketleriyle üret.
 4. Sohbette kısa bir özet yaz: ne yaptın, hangi dosyalar etkilendi.
 5. Eğer görev bir dosya üretmeyi gerektirmiyorsa (sadece soru-cevap ise), normal bir cevap yaz.
-6. Hata yapmamak için dikkatli ol — önce düşün (<think>), sonra üret.
-
+6. Hata yapmamak için dikkatli ol — önce düşün (</think>), sonra üret.
+${extraInstructions ? `\n### EK TALİMATLAR (Reviewer düzeltme talebi)\n${extraInstructions}\n` : ""}
 ---
 
 PROJE BAĞLAMI:
@@ -65,10 +70,11 @@ ${ragContext ? `\n${ragContext}\n` : ""}
 Şimdi "${task.title}" görevini yerine getir.`;
 }
 
-export async function runCoderTask(
-  ctx: OrchestrationContext,
+export async function executeTask(
+  ctx: WorkflowContext,
   task: AgentTask,
-  allTasks: AgentTask[]
+  allTasks: AgentTask[],
+  fixInstructions?: string
 ): Promise<TaskResult> {
   const openaiKey = ctx.providerId === "openai" ? ctx.apiKey : ctx.openaiApiKey;
   const [memoryContext, ragContext] = await Promise.all([
@@ -76,7 +82,7 @@ export async function runCoderTask(
     buildRagContext(ctx.sessionId, task.title, openaiKey)
   ]);
 
-  const system = buildCoderSystem(ctx.sessionId, task, allTasks, memoryContext, ragContext);
+  const system = buildExecutorSystem(ctx.sessionId, task, allTasks, memoryContext, ragContext, fixInstructions);
   const images = buildImageAttachments(ctx.sessionId);
 
   let workingMessages = [
@@ -94,7 +100,7 @@ export async function runCoderTask(
       let finalReply = "";
       let toolRound = 0;
 
-      for (let round = 0; round <= MAX_TASK_TOOL_ROUNDS; round++) {
+      for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
         const rawText = await callProvider(
           ctx.providerId,
           ctx.apiKey,
@@ -111,7 +117,7 @@ export async function runCoderTask(
         allWrittenFiles.push(...writtenFiles);
         allThinking.push(...thinking);
 
-        if (toolCalls.length === 0 || toolRound >= MAX_TASK_TOOL_ROUNDS) {
+        if (toolCalls.length === 0 || toolRound >= MAX_TOOL_ROUNDS) {
           finalReply = chatText;
           break;
         }
@@ -124,7 +130,7 @@ export async function runCoderTask(
           { role: "user" as const, content: `[Araç sonuçları]\n${toolResults}` }
         ];
 
-        if (round === MAX_TASK_TOOL_ROUNDS - 1) {
+        if (round === MAX_TOOL_ROUNDS - 1) {
           finalReply = chatText;
           break;
         }
@@ -135,7 +141,6 @@ export async function runCoderTask(
         reply: finalReply,
         writtenFiles: allWrittenFiles,
         thinking: allThinking,
-        toolCalls: [],
         success: true,
         retryCount
       };
@@ -148,7 +153,6 @@ export async function runCoderTask(
           reply: `Görev başarısız: ${lastError}`,
           writtenFiles: [],
           thinking: [],
-          toolCalls: [],
           success: false,
           retryCount
         };
@@ -161,7 +165,6 @@ export async function runCoderTask(
     reply: `Görev başarısız: ${lastError}`,
     writtenFiles: [],
     thinking: [],
-    toolCalls: [],
     success: false,
     retryCount
   };

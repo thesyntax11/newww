@@ -1,6 +1,6 @@
 import { ChatMessage } from "../types";
 
-export type AgentRole = "planner" | "coder" | "reviewer" | "orchestrator";
+export type AgentRole = "planner" | "executor" | "reviewer" | "orchestrator";
 
 export type TaskStatus = "pending" | "in_progress" | "completed" | "failed" | "skipped";
 
@@ -27,7 +27,6 @@ export interface TaskResult {
   reply: string;
   writtenFiles: { path: string; size: number; updatedAt: string }[];
   thinking: string[];
-  toolCalls: { id: string; args: Record<string, string>; raw: string }[];
   success: boolean;
   retryCount: number;
 }
@@ -49,17 +48,17 @@ export interface ReviewIssue {
   file?: string;
 }
 
-export interface OrchestrationResult {
+export interface WorkflowResult {
   reply: string;
   thinking: string[];
   writtenFiles: { path: string; size: number; updatedAt: string }[];
   tasks: AgentTask[];
   review: ReviewResult | null;
   imagesSeen: string[];
-  stages: OrchestrationStage[];
+  stages: WorkflowStage[];
 }
 
-export interface OrchestrationStage {
+export interface WorkflowStage {
   role: AgentRole;
   label: string;
   status: "pending" | "running" | "completed" | "failed" | "skipped";
@@ -67,7 +66,7 @@ export interface OrchestrationStage {
   durationMs: number;
 }
 
-export interface OrchestrationContext {
+export interface WorkflowContext {
   sessionId: string;
   providerId: string;
   apiKey: string;
