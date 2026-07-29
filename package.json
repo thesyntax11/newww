@@ -1,0 +1,45 @@
+{
+  "name": "aether-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Aether — çoklu LLM sağlayıcılı, sanal disk üzerine dosya üreten AI Agent sohbet platformu",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "@supabase/supabase-js": "^2.111.0",
+    "@tailwindcss/typography": "^0.5.20",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "adm-zip": "0.5.16",
+    "archiver": "7.0.1",
+    "clsx": "2.1.1",
+    "framer-motion": "11.11.9",
+    "lucide-react": "0.453.0",
+    "mammoth": "1.8.0",
+    "nanoid": "5.0.7",
+    "next": "14.2.15",
+    "pdf-parse": "1.1.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "zustand": "4.5.5"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "0.5.5",
+    "@types/archiver": "6.0.2",
+    "@types/node": "20.16.11",
+    "@types/pdf-parse": "1.1.4",
+    "@types/react": "18.3.11",
+    "@types/react-dom": "18.3.1",
+    "autoprefixer": "10.4.20",
+    "postcss": "8.4.47",
+    "tailwindcss": "3.4.13",
+    "typescript": "5.6.3"
+  }
+}

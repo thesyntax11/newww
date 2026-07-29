@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-line;
+  }
+  body {
+    @apply bg-void;
+    background-image:
+      radial-gradient(900px circle at 15% -10%, rgba(157, 92, 255, 0.14), transparent 55%),
+      radial-gradient(700px circle at 100% 10%, rgba(255, 180, 84, 0.08), transparent 50%);
+  }
+  ::selection {
+    background: rgba(157, 92, 255, 0.35);
+  }
+  :focus-visible {
+    outline: 2px solid #9d5cff;
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-panel/70 backdrop-blur-xl border border-line shadow-glass rounded-xl2;
+  }
+  .glass-soft {
+    @apply bg-panel-soft/60 backdrop-blur-md border border-line rounded-xl2;
+  }
+  .btn-plasma {
+    @apply inline-flex items-center gap-2 rounded-full bg-plasma px-5 py-2.5 text-sm font-semibold text-void
+      shadow-glow transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98];
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-medium text-mist
+      transition-colors duration-200 hover:border-plasma/50 hover:text-chalk;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
