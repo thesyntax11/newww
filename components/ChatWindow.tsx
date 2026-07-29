@@ -6,6 +6,7 @@ import { useAetherStore } from "@/lib/store";
 import { getProvider } from "@/lib/providers";
 import UploadButton from "./UploadButton";
 import ThinkingBlock from "./ThinkingBlock";
+import OrchestrationPanel from "./OrchestrationPanel";
 
 function MessageLine({ line }: { line: string }) {
   if (line.startsWith("📄")) {
@@ -82,7 +83,10 @@ export default function ChatWindow({
       appendMessage(activeProvider, {
         role: "assistant",
         content: data.reply,
-        thinking: data.thinking || []
+        thinking: data.thinking || [],
+        tasks: data.tasks || [],
+        review: data.review || null,
+        stages: data.stages || []
       });
       if (data.writtenFiles?.length > 0) onDiskChanged();
 
@@ -122,6 +126,13 @@ export default function ChatWindow({
             >
               {m.role === "assistant" && m.thinking && m.thinking.length > 0 && (
                 <ThinkingBlock steps={m.thinking} />
+              )}
+              {m.role === "assistant" && (
+                <OrchestrationPanel
+                  tasks={m.tasks || []}
+                  review={m.review || null}
+                  stages={m.stages || []}
+                />
               )}
               {m.content.split("\n").map((line, idx) => (
                 <MessageLine key={idx} line={line} />

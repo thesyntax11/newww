@@ -30,10 +30,42 @@ export interface ProviderConfig {
   extractText: (json: any) => string;
 }
 
+export interface AgentTaskLite {
+  index: number;
+  title: string;
+  description: string;
+  status: string;
+  resultSummary: string;
+  confidence: number;
+  filesProduced: string[];
+  error: string;
+}
+
+export interface ReviewResultLite {
+  approved: boolean;
+  confidence: number;
+  critique: string;
+  issues: { severity: string; category: string; description: string; file?: string }[];
+  suggestedFixes: string;
+  missingRequirements: string[];
+  needsWebSearch: boolean;
+}
+
+export interface OrchestrationStageLite {
+  role: string;
+  label: string;
+  status: string;
+  detail: string;
+  durationMs: number;
+}
+
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   thinking?: string[];
+  tasks?: AgentTaskLite[];
+  review?: ReviewResultLite | null;
+  stages?: OrchestrationStageLite[];
 }
 
 export interface DiskFile {
